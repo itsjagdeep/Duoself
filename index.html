@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentrax Corp | Bifurcation Division</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Courier New', monospace;
+        }
+        
+        :root {
+            --primary: #00FFFF;
+            --secondary: #FF00FF;
+            --dark: #000033;
+            --light: #CCFFFF;
+            --bg: #0A0A1A;
+            --grid: #1A1A3A;
+        }
+        
+        body {
+            background-color: var(--bg);
+            color: var(--light);
+            overflow-x: hidden;
+            background-image: linear-gradient(var(--grid) 1px, transparent 1px), 
+                              linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            z-index: -1;
+        }
+        
+        .content {
+            position: relative;
+            padding: 2rem;
+            max-width: 1000px;
+            margin: 0 auto;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 20, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 100;
+            border-bottom: 2px solid var(--primary);
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: var(--primary);
+            text-shadow: 0 0 10px var(--primary), 0 0 20px var(--primary);
+        }
+        
+        .nav {
+            display: flex;
+            gap: 2rem;
+        }
+        
+        .nav-item {
+            cursor: pointer;
+            font-weight: bold;
+            color: var(--light);
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            position: relative;
+            padding: 0.25rem 0;
+        }
+        
+        .nav-item:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0%;
+            height: 2px;
+            background-color: var(--secondary);
+            transition: width 0.3s ease;
+        }
+        
+        .nav-item:hover {
+            color: var(--secondary);
+            text-shadow: 0 0 5px var(--secondary);
+        }
+        
+        .nav-item:hover:after {
+            width: 100%;
+        }
+        
+        .hero {
+            margin-top: 6rem;
+            margin-bottom: 3rem;
+            background-color: rgba(10, 10, 30, 0.7);
+            padding: 3rem;
+            border-radius: 0px;
+            border: 2px solid var(--primary);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent 49%, var(--primary) 49%, var(--primary) 51%, transparent 51%);
+            background-size: 10px 10px;
+            opacity: 0.1;
+            pointer-events: none;
+        }
+        
+        h1 {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+            font-weight: 800;
+            text-shadow: 0 0 10px var(--primary);
+            text-transform: uppercase;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: var(--light);
+            max-width: 600px;
+            line-height: 1.5;
+            margin-bottom: 2rem;
+        }
+        
+        .button {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            background-color: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .button:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: var(--primary);
+            opacity: 0.2;
+            transition: left 0.3s ease;
+        }
+        
+        .button:hover {
+            color: white;
+            box-shadow: 0 0 15px var(--primary);
+        }
+        
+        .button:hover:before {
+            left: 0;
+        }
+        
+        .section {
+            margin: 6rem 0;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+            background-color: rgba(10, 10, 30, 0.7);
+            padding: 3rem;
+            border: 2px solid var(--primary);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .section:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent 49%, var(--primary) 49%, var(--primary) 51%, transparent 51%);
+            background-size: 10px 10px;
+            opacity: 0.1;
+            pointer-events: none;
+        }
+        
+        .section.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        h2 {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px var(--primary);
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+        
+        .card {
+            background: rgba(0, 0, 20, 0.8);
+            padding: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 2px solid var(--secondary);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .card:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: var(--secondary);
+            opacity: 0.1;
+            transition: left 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(255, 0, 255, 0.2);
+        }
+        
+        .card:hover:before {
+            left: 0;
+        }
+        
+        h3 {
+            font-size: 1.5rem;
+            color: var(--secondary);
+            margin-bottom: 1rem;
+            text-shadow: 0 0 5px var(--secondary);
+        }
+        
+        p {
+            color: var(--light);
+            line-height: 1.6;
+        }
+        
+        .footer {
+            padding: 3rem 2rem;
+            background: rgba(0, 0, 20, 0.8);
+            color: var(--light);
+            text-align: center;
+            border-top: 2px solid var(--primary);
+        }
+        
+        .footer p {
+            color: rgba(204, 255, 255, 0.8);
+        }
+        
+        .separator {
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            margin: 4rem 0;
+        }
+        
+        /* Modal Styling - Retro inspired */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 20, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background: var(--dark);
+            width: 90%;
+            max-width: 500px;
+            padding: 2rem;
+            position: relative;
+            border: 2px solid var(--primary);
+            box-shadow: 0 0 20px var(--primary);
+        }
+        
+        .close-button {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--primary);
+        }
+        
+        /* Terminal Style */
+        .terminal {
+            background-color: #000;
+            border: 2px solid var(--primary);
+            padding: 1.5rem;
+            margin-top: 1rem;
+            font-family: 'Courier New', monospace;
+            color: var(--primary);
+            position: relative;
+        }
+        
+        .terminal:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.15),
+                rgba(0, 0, 0, 0.15) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+            pointer-events: none;
+        }
+        
+        .terminal-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--primary);
+        }
+        
+        .numbers-box {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .number {
+            background-color: rgba(0, 255, 255, 0.1);
+            border: 1px solid var(--primary);
+            padding: 0.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .number:hover {
+            background-color: var(--primary);
+            color: var(--dark);
+        }
+        
+        .scan-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background-color: rgba(0, 255, 255, 0.2);
+            z-index: 100;
+            animation: scanline 8s linear infinite;
+            pointer-events: none;
+        }
+        
+        @keyframes scanline {
+            0% {
+                top: 0%;
+            }
+            100% {
+                top: 100%;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .nav {
+                display: none;
+            }
+            
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            .subtitle {
+                font-size: 1.2rem;
+            }
+            
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+    <div class="scan-line"></div>
+    
+    <header class="header">
+        <div class="logo">SENTRAX CORP</div>
+        <nav class="nav">
+            <div class="nav-item" onclick="scrollToSection('about')">About</div>
+            <div class="nav-item" onclick="scrollToSection('departments')">Departments</div>
+            <div class="nav-item" onclick="scrollToSection('benefits')">Benefits</div>
+            <div class="nav-item" onclick="openModal()">Portal</div>
+        </nav>
+    </header>
+    
+    <main class="content">
+        <section class="hero">
+            <h1>Bifurcation Division</h1>
+            <p class="subtitle">Where work-life balance is more than just a concept. It's a revolutionary procedure.</p>
+            <button class="button" onclick="openModal()">Apply for Bifurcation</button>
+        </section>
+        
+        <div class="separator"></div>
+        
+        <section id="about" class="section">
+            <h2>About Bifurcation</h2>
+            <p class="subtitle">The groundbreaking procedure that creates a distinct separation between your work memories and your personal life.</p>
+            <div class="terminal">
+                <div class="terminal-header">
+                    <span>Bifurcation Protocol</span>
+                    <span>v1.0.23</span>
+                </div>
+                <p>The bifurcation procedure establishes a cognitive barrier between your work identity and personal life. While at work, you will have no memory of your personal life. While at home, you will have no memory of work.</p>
+                <p>STATUS: Authorized by Executive Committee</p>
+            </div>
+        </section>
+        
+        <section id="departments" class="section">
+            <h2>Departments</h2>
+            <div class="grid">
+                <div class="card">
+                    <h3>Data Processing</h3>
+                    <p>Process complex data clusters based on intuitive pattern recognition. Our proprietary algorithms help you identify and isolate anomalous data points.</p>
+                </div>
+                <div class="card">
+                    <h3>Visual Communications</h3>
+                    <p>Create and maintain the visual identity of Sentrax Corporation, ensuring consistency across all corporate materials.</p>
+                </div>
+                <div class="card">
+                    <h3>Operations Division</h3>
+                    <p>Oversee critical functions that sustain Sentrax's core mission. (Details restricted by security protocol).</p>
+                </div>
+            </div>
+        </section>
+        
+        <section id="benefits" class="section">
+            <h2>Employee Benefits</h2>
+            <div class="grid">
+                <div class="card">
+                    <h3>Complete Separation</h3>
+                    <p>Never worry about bringing work stress home again. Your external self will thank you.</p>
+                </div>
+                <div class="card">
+                    <h3>Reward Celebrations</h3>
+                    <p>Exceed your quota to earn special rewards including our signature culinary experiences.</p>
+                </div>
+                <div class="card">
+                    <h3>Wellness Center</h3>
+                    <p>Access to state-of-the-art wellness facilities to keep both your professional and personal selves in perfect harmony.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal()">×</span>
+            <h3>Data Processing Terminal Access</h3>
+            <p>Please categorize the following data points into their appropriate clusters.</p>
+            <div class="terminal">
+                <div class="terminal-header">
+                    <span>DP Access Point</span>
+                    <span>Session #4279</span>
+                </div>
+                <div class="numbers-box">
+                    <div class="number">47</div>
+                    <div class="number">39</div>
+                    <div class="number">82</div>
+                    <div class="number">15</div>
+                    <div class="number">63</div>
+                    <div class="number">28</div>
+                    <div class="number">71</div>
+                    <div class="number">94</div>
+                    <div class="number">52</div>
+                    <div class="number">36</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer class="footer">
+        <p>© 2025 Sentrax Corporation. All cognitive experiences are property of Sentrax.</p>
+    </footer>
+
+    <script>
+        // Three.js implementation for 80s computer model
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(0x0A0A1A, 0);
+        container.appendChild(renderer.domElement);
+        
+        // Create 80s Computer Model
+        function createComputer() {
+            const computerGroup = new THREE.Group();
+            
+            // Monitor
+            const monitorWidth = 5;
+            const monitorHeight = 4;
+            const monitorDepth = 1;
+            
+            // Monitor body
+            const monitorGeom = new THREE.BoxGeometry(monitorWidth, monitorHeight, monitorDepth);
+            const monitorMat = new THREE.MeshStandardMaterial({ 
+                color: 0x333344,
+                roughness: 0.8,
+                metalness: 0.2
+            });
+            const monitor = new THREE.Mesh(monitorGeom, monitorMat);
+            
+            // Screen
+            const screenWidth = monitorWidth * 0.8;
+            const screenHeight = monitorHeight * 0.7;
+            const screenGeom = new THREE.BoxGeometry(screenWidth, screenHeight, 0.1);
+            const screenMat = new THREE.MeshStandardMaterial({ 
+                color: 0x00FFFF,
+                emissive: 0x00FFFF,
+                emissiveIntensity: 0.2,
+                roughness: 0.5
+            });
+            const screen = new THREE.Mesh(screenGeom, screenMat);
+            screen.position.z = monitorDepth / 2 + 0.05;
+            
+            // Stand
+            const standGeom = new THREE.BoxGeometry(monitorWidth / 3, monitorHeight / 10, monitorDepth / 2);
+            const standMat = new THREE.MeshStandardMaterial({ 
+                color: 0x333344,
+                roughness: 0.8,
+                metalness: 0.2
+            });
+            const stand = new THREE.Mesh(standGeom, standMat);
+            stand.position.y = -monitorHeight / 2 - standGeom.parameters.height / 2;
+            
+            // Base
+            const baseGeom = new THREE.BoxGeometry(monitorWidth / 1.5, monitorHeight / 15, monitorDepth * 2);
+            const baseMat = new THREE.MeshStandardMaterial({ 
+                color: 0x333344,
+                roughness: 0.8,
+                metalness: 0.2
+            });
+            const base = new THREE.Mesh(baseGeom, baseMat);
+            base.position.y = stand.position.y - standGeom.parameters.height / 2 - baseGeom.parameters.height / 2;
+            base.position.z = monitorDepth / 2;
+            
+            // Keyboard
+            const keyboardGeom = new THREE.BoxGeometry(monitorWidth * 0.9, monitorHeight / 8, monitorDepth * 0.7);
+            const keyboardMat = new THREE.MeshStandardMaterial({ 
+                color: 0x222233,
+                roughness: 0.9,
+                metalness: 0.1
+            });
+            const keyboard = new THREE.Mesh(keyboardGeom, keyboardMat);
+            keyboard.position.y = base.position.y;
+            keyboard.position.z = monitorDepth * 2;
+            
+            // Add components to group
+            computerGroup.add(monitor);
+            computerGroup.add(screen);
+            computerGroup.add(stand);
+            computerGroup.add(base);
+            computerGroup.add(keyboard);
+            
+            return computerGroup;
+        }
+        
+        const computer = createComputer();
+        scene.add(computer);
+        
+        // Adjust computer position
+        computer.position.y = -2;
+        computer.rotation.x = Math.PI / 12; // Tilt slightly
+        
+        // Add lights
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        scene.add(ambientLight);
+        
+        const primaryLight = new THREE.PointLight(0x00FFFF, 0.8, 50);
+        primaryLight.position.set(5, 5, 5);
+        scene.add(primaryLight);
+        
+        const secondaryLight = new THREE.PointLight(0xFF00FF, 0.8, 50);
+        secondaryLight.position.set(-5, 5, -5);
+        scene.add(secondaryLight);
+        
+        // Position camera
+        camera.position.z = 10;
+        
+        // Handle scroll position for computer animation
+        let scrollPosition = 0;
+        window.addEventListener('scroll', () => {
+            scrollPosition = window.scrollY;
+        });
+        
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Animate computer based on scroll
+            const normalizedScroll = scrollPosition / (document.body.scrollHeight - window.innerHeight);
+            
+            // Rotate computer based on scroll
+            computer.rotation.y = Math.sin(normalizedScroll * Math.PI * 2) * 0.3;
+            
+            // Move up/down slightly
+            computer.position.y = -2 + Math.sin(normalizedScroll * Math.PI * 4) * 0.5;
+            
+            // Screen flicker effect
+            const screen = computer.children[1];
+            screen.material.emissiveIntensity = 0.2 + Math.random() * 0.05;
+            
+            renderer.render(scene, camera);
+        }
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // Start animation
+        animate();
+        
+        // Scroll animation for sections
+        const sections = document.querySelectorAll('.section');
+        
+        function checkSections() {
+            sections.forEach(section => {
+                const sectionTop = section.getBoundingClientRect().top;
+                const windowHeight = window.innerHeight;
+                
+                if (sectionTop < windowHeight * 0.8) {
+                    section.classList.add('visible');
+                }
+            });
+        }
+        
+        // Check sections on load
+        window.addEventListener('load', checkSections);
+        
+        // Check sections on scroll
+        window.addEventListener('scroll', checkSections);
+        
+        // Scroll to section function
+        function scrollToSection(id) {
+            const section = document.getElementById(id);
+            window.scrollTo({
+                top: section.offsetTop - 100,
+                behavior: 'smooth'
+            });
+        }
+        
+        // Modal functions
+        function openModal() {
+            document.getElementById('modal').style.display = 'flex';
+        }
+        
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+        
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('modal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        };
+        
+        // Make numbers in the terminal interactive
+        const numbers = document.querySelectorAll('.number');
+        numbers.forEach(number => {
+            number.addEventListener('click', function() {
+                this.style.backgroundColor = '#00FFFF';
+                this.style.color = '#000033';
+                setTimeout(() => {
+                    this.style.display = 'none';
+                }, 500);
+            });
+        });
+    </script>
+</body>
+</html>
